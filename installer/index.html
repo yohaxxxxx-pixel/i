@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iOS-OS Installer</title>
+<style>
+  :root {
+    --bg: #eef4f7;
+    --card: #ffffff;
+    --ink: #1b1b1f;
+    --muted: #5f6470;
+    --line: #dde2ea;
+    --accent: #0a84ff;
+    --accent-ink: #ffffff;
+    --accent-soft: #e3efff;
+    --ok: #0f7b0f;
+    --warn: #9d5d00;
+    --err: #c42b1c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Segoe UI Variable", "Segoe UI", -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: radial-gradient(1200px 600px at 70% -10%, #cfe3ff 0%, rgba(207,227,255,0) 60%), var(--bg);
+    min-height: 100vh;
+  }
+  .titlebar {
+    max-width: 860px; margin: 0 auto; padding: 18px 16px 0;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 30px; height: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+  .logo i { background: var(--accent); border-radius: 2px; }
+  .brand h1 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.2px; }
+  .brand .sub { color: var(--muted); font-size: 13px; }
+  .status {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #a0a6b0; }
+  .dot.ok { background: var(--ok); } .dot.warn { background: #f7a600; } .dot.err { background: var(--err); }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 18px 16px 48px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px;
+    margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,.04);
+  }
+  .card h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .card h2 small { color: var(--muted); font-weight: 400; font-size: 13px; }
+  ol.how { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+  ol.how b { color: var(--ink); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .game {
+    position: relative; border: 1px solid var(--line); border-radius: 6px; padding: 12px 10px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; background: #fbfcfe;
+  }
+  .game:hover { background: var(--accent-soft); border-color: #b9d6f2; }
+  .game .ico {
+    width: 44px; height: 44px; border-radius: 9px; display: grid; place-items: center;
+    background: linear-gradient(160deg, #7b8ff0, #4a5db5);
+  }
+  .game .ico svg { width: 26px; }
+  .game .name { font-weight: 600; font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .game .file { color: var(--muted); font-size: 11px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .game .remove {
+    position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 4px; border: none;
+    background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; opacity: 0;
+  }
+  .game:hover .remove, .game .remove:focus { opacity: 1; }
+  .game .remove:hover { background: var(--err); color: #fff; }
+  .add {
+    border: 1px dashed #9fb4cc; border-radius: 6px; display: grid; place-items: center; min-height: 112px;
+    color: var(--muted); font-size: 13px; cursor: pointer; text-align: center; padding: 8px;
+  }
+  .add .plus { font-size: 26px; color: var(--accent); line-height: 1; }
+  .add.over, .add:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); }
+  .meter { height: 6px; background: #e3e8ef; border-radius: 3px; overflow: hidden; }
+  .meter div { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .actions { display: flex; flex-direction: column; gap: 12px; }
+  button.install {
+    align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; border: none; border-radius: 6px;
+    padding: 11px 22px; font: inherit; font-weight: 600; font-size: 15px; color: var(--accent-ink);
+    background: var(--accent); cursor: pointer; box-shadow: 0 1px 0 rgba(0,0,0,.15);
+  }
+  button.install:hover:not(:disabled) { background: #1975c5; }
+  button.install:disabled { background: #b6bcc6; cursor: default; }
+  button.install .logo { width: 16px; height: 16px; gap: 2px; }
+  button.install .logo i { background: #fff; }
+  ul.steps { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+  ul.steps li { display: flex; align-items: center; gap: 10px; padding: 3px 0; color: var(--muted); }
+  ul.steps li .s { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #c0c6d0; flex: none; }
+  ul.steps li.running { color: var(--ink); }
+  ul.steps li.running .s { border-color: var(--accent); border-right-color: transparent; animation: spin .8s linear infinite; }
+  ul.steps li.done .s { background: var(--ok); border-color: var(--ok); }
+  ul.steps li.error { color: var(--err); }
+  ul.steps li.error .s { background: var(--err); border-color: var(--err); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result { font-size: 14px; padding: 10px 12px; border-radius: 6px; display: none; }
+  .result.ok { display: block; background: #dff6dd; color: #0e5c0e; }
+  .result.error { display: block; background: #fde7e9; color: #8a1c12; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  pre { background: #f3f5f9; border-radius: 6px; padding: 10px; font-size: 11px; max-height: 260px; overflow: auto; white-space: pre-wrap; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1d2027; --card: #272b33; --ink: #f2f4f8; --muted: #a8aeba; --line: #3a3f49; --accent: #5fd0f5; --accent-ink: #06202a; --accent-soft: #1f3540; }
+    body { background: radial-gradient(1200px 600px at 70% -10%, #1f3a5c 0%, rgba(31,58,92,0) 60%), var(--bg); }
+    .game { background: #2c3039; }
+    .meter { background: #3a3f49; }
+    pre { background: #1f2229; color: var(--ink); }
+    button.install:hover:not(:disabled) { background: #74d0ff; }
+    button.install .logo i { background: #06202a; }
+    .result.ok { background: #1f3b1f; color: #b6f0b0; }
+    .result.error { background: #4a1f1c; color: #ffc9c3; }
+  }
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div>
+      <h1>iOS-OS</h1>
+      <div class="sub">Installateur pour NumWorks n0110, n0115 et n0120 · slot B</div>
+    </div>
+  </div>
+  <div class="status"><span class="dot" id="calcDot"></span><span id="calcText">Recherche…</span></div>
+</div>
+
+<div class="wrap">
+  <section class="card">
+    <h2>Avant d'installer</h2>
+    <ol class="how">
+      <li>Branche la calculatrice en USB.</li>
+      <li>Si elle est sur iOS-OS, iOS-OS, Windows-OS, Switch-OS ou PSP-OS, appuie sur <b>Reset</b> au dos : elle revient sur le système officiel (slot A).</li>
+      <li>Quand le voyant en haut à droite passe au vert, clique sur <b>Installer</b>.</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>Jeux <small id="gamesInfo"></small></h2>
+    <div class="grid" id="games"></div>
+    <input type="file" id="picker" accept=".nwa" multiple hidden>
+    <div class="meter" title="Place utilisée dans le slot B"><div id="meter"></div></div>
+    <div class="note" id="gamesNote">Les jeux apparaissent dans le menu Démarrer › All apps.</div>
+  </section>
+
+  <section class="card actions">
+    <button class="install" id="install" disabled><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Installer iOS-OS</button>
+    <ul class="steps" id="steps"></ul>
+    <div class="result" id="result"></div>
+    <details id="logBox" hidden>
+      <summary>Journal détaillé</summary>
+      <pre id="log"></pre>
+    </details>
+  </section>
+</div>
+
+<script>
+const MODELS_OK_ALL = ["n0110", "n0115", "n0120"];
+let MODELS_OK = MODELS_OK_ALL;
+const $ = (id) => document.getElementById(id);
+const SECTOR = 0x10000;
+let state = { calculator: { connected: null }, games: [], appsCapacity: 0, firmware: true };
+let installing = false;
+
+const gameIcon = '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="8" y="30" width="84" height="44" rx="20" fill="#fff"/><path d="M28 44v16M20 52h16" stroke="#4a5db5" stroke-width="7" stroke-linecap="round"/><circle cx="64" cy="47" r="5" fill="#4a5db5"/><circle cx="75" cy="58" r="5" fill="#4a5db5"/></svg>';
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderCalc() {
+  const c = state.calculator;
+  const dot = $("calcDot"), text = $("calcText");
+  dot.className = "dot";
+  if (installing || c.connected === null) { text.textContent = installing ? "Installation…" : "Recherche…"; return; }
+  if (!c.connected) { dot.classList.add("err"); text.textContent = "Calculatrice non détectée"; }
+  else if (!MODELS_OK.includes(c.model)) { dot.classList.add("err"); text.textContent = `Modèle ${c.model} non supporté`; }
+  else if (c.inactiveSlot !== "B") { dot.classList.add("warn"); text.textContent = "Sur le slot B : appuie sur Reset"; }
+  else { dot.classList.add("ok"); text.textContent = `${c.model} prête`; }
+}
+
+function canInstall() {
+  const c = state.calculator;
+  return !installing && state.firmware && c.connected && MODELS_OK.includes(c.model) && c.inactiveSlot === "B";
+}
+
+function renderGames() {
+  const grid = $("games");
+  grid.innerHTML = "";
+  let used = SECTOR;
+  for (const g of state.games) {
+    used += Math.ceil(g.size / SECTOR) * SECTOR;
+    const tile = document.createElement("div");
+    tile.className = "game";
+    tile.innerHTML = `<div class="ico">${gameIcon}</div><div class="name" title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</div><div class="file">${escapeHtml(g.file)} · ${(g.size / 1024).toFixed(0)} Ko</div>`;
+    const del = document.createElement("button");
+    del.className = "remove";
+    del.title = "Retirer";
+    del.setAttribute("aria-label", `Retirer ${g.name}`);
+    del.textContent = "×";
+    del.disabled = installing;
+    del.onclick = async () => {
+      await fetch("/api/games/" + encodeURIComponent(g.file), { method: "DELETE" });
+      refresh();
+    };
+    tile.appendChild(del);
+    grid.appendChild(tile);
+  }
+  const add = document.createElement("label");
+  add.className = "add";
+  add.htmlFor = "picker";
+  add.innerHTML = '<div><div class="plus">+</div>Glisse des .nwa ici<br>ou clique</div>';
+  add.addEventListener("dragover", (e) => { e.preventDefault(); add.classList.add("over"); });
+  add.addEventListener("dragleave", () => add.classList.remove("over"));
+  add.addEventListener("drop", (e) => { e.preventDefault(); e.stopPropagation(); add.classList.remove("over"); upload(e.dataTransfer.files); });
+  grid.appendChild(add);
+  const cap = state.appsCapacity || 1;
+  $("meter").style.width = Math.min(100, (used / cap) * 100) + "%";
+  $("gamesInfo").textContent = `${state.games.length} jeu${state.games.length > 1 ? "x" : ""} · ~${Math.round(used / 1024)} Ko / ${Math.round(cap / 1024)} Ko`;
+  if (state.platform === "windows") {
+    $("gamesNote").textContent = "Les jeux apparaissent dans le menu Démarrer › All apps. Sur Windows, ajouter un nouveau jeu demande la chaîne ARM (Arm GNU Toolchain).";
+  }
+}
+
+function render() {
+  renderCalc();
+  renderGames();
+  $("install").disabled = !canInstall();
+}
+
+async function refresh() {
+  if (installing) return;
+  try {
+    const r = await fetch("/api/status");
+    state = await r.json();
+    if (state && Array.isArray(state.models)) MODELS_OK = state.models;
+  } catch { state.calculator = { connected: false }; }
+  render();
+}
+
+async function upload(files) {
+  for (const f of files) {
+    if (!f.name.toLowerCase().endsWith(".nwa")) { alert(`${f.name} n'est pas un .nwa`); continue; }
+    const r = await fetch("/api/games", { method: "POST", headers: { "X-Filename": encodeURIComponent(f.name) }, body: f });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); alert(`${f.name} : ${e.error || "refusé"}`); }
+  }
+  refresh();
+}
+
+$("picker").addEventListener("change", (e) => { upload(e.target.files); e.target.value = ""; });
+document.addEventListener("dragover", (e) => e.preventDefault());
+document.addEventListener("drop", (e) => { e.preventDefault(); if (e.dataTransfer.files.length) upload(e.dataTransfer.files); });
+
+function renderJob(job) {
+  const steps = $("steps");
+  steps.innerHTML = "";
+  for (const s of job.steps) {
+    const li = document.createElement("li");
+    li.className = s.state;
+    li.innerHTML = `<span class="s"></span><span>${escapeHtml(s.label)}</span>`;
+    steps.appendChild(li);
+  }
+  $("logBox").hidden = !job.log;
+  $("log").textContent = job.log;
+  const res = $("result");
+  res.className = "result";
+  if (job.result === "ok") {
+    res.classList.add("ok");
+    res.textContent = "iOS-OS est installé et démarre sur ta calculatrice. Passe l'écran « logiciel non officiel » avec une touche : l'écran verrouillé apparaît, appuie sur OK pour le déverrouiller.";
+  } else if (job.result === "error") {
+    res.classList.add("error");
+    const last = job.log.split("\n").filter((l) => l.startsWith("ERREUR")).pop() || "Erreur.";
+    res.textContent = last.replace("ERREUR: ", "");
+  }
+}
+
+$("install").onclick = async () => {
+  const r = await fetch("/api/install", { method: "POST" });
+  if (!r.ok) return;
+  installing = true;
+  render();
+  const poll = setInterval(async () => {
+    const job = await (await fetch("/api/job")).json();
+    renderJob(job);
+    if (!job.running) {
+      clearInterval(poll);
+      installing = false;
+      setTimeout(refresh, 1500);
+    }
+  }, 500);
+};
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

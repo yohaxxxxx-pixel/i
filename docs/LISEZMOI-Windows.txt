@@ -1,0 +1,36 @@
+iOS-OS : installateur pour NumWorks n0110, n0115 et n0120 (PC Windows)
+==========================================================
+
+Rien à installer : ni Python, ni pilote. Windows reconnaît la calculatrice
+tout seul.
+
+1. Décompresse le zip (clic droit > Extraire tout). Ne lance pas
+   l'installateur depuis l'intérieur du zip.
+
+2. Double-clic sur « Installer iOS-OS.exe ».
+   Si Windows affiche « Windows a protégé votre ordinateur » :
+   Informations complémentaires > Exécuter quand même.
+   Une fenêtre noire s'ouvre, puis la page de l'installateur dans ton
+   navigateur. Laisse la fenêtre noire ouverte ; ferme-la à la fin pour
+   quitter.
+
+3. Branche la calculatrice en USB et appuie sur Reset au dos :
+   elle redémarre sur le système officiel (slot A).
+
+4. Quand le voyant passe au vert, clique sur « Installer iOS-OS ».
+   Ne débranche pas la calculatrice pendant l'installation.
+
+Les jeux déjà dans le dossier games sont prêts à installer. Pour ajouter
+d'autres jeux .nwa depuis Windows, installe aussi la chaîne ARM
+(Arm GNU Toolchain, « arm-none-eabi », sur developer.arm.com), ou ajoute-les
+dans le dossier games/ de ta copie privée sur GitHub et relance la
+compilation.
+
+Si la page dit que la calculatrice est introuvable alors qu'elle est
+branchée : ferme les autres programmes qui l'utilisent (site de NumWorks,
+NumSocial, un autre installateur), essaie un autre câble ou un autre port USB,
+puis rappuie sur Reset.
+
+iOS-OS s'installe dans le slot B : le système officiel (slot A) n'est
+jamais modifié. Après un Reset, la calculatrice revient sur le système
+officiel ; il suffit de relancer l'installation pour retrouver iOS-OS.

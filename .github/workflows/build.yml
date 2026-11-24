@@ -1,0 +1,98 @@
+# Builds YOUR iOS-OS (an iOS style userland for the NumWorks n0110, n0115 and n0120)
+# with its one-click installers for Mac and for Windows (a .exe, nothing to
+# install on the PC).
+#
+# It only runs in a PRIVATE copy of this repository ("Use this template" ->
+# Private). The firmware is compiled from NumWorks' own sources for you, in
+# your account; it must not end up downloadable by everyone, which is what a
+# public repository would do with it.
+#
+# Games: put .nwa files in the games/ folder of your private copy, they are
+# pre-linked for slot B and shipped with both installers.
+#
+# Actions tab -> "Build iOS-OS" -> Run workflow. About 30 minutes (one firmware per model), then
+# download iOS-OS-Mac or iOS-OS-Windows at the bottom of the run's
+# page.
+name: Build iOS-OS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  private-only:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check that this copy is private
+        if: ${{ !github.event.repository.private }}
+        run: |
+          echo "::error::Ce dépôt est public. Crée une copie PRIVÉE (bouton « Use this template » > Private) et lance la compilation dedans."
+          exit 1
+
+  build:
+    needs: private-only
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the NumWorks SDK (Linux)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential git imagemagick libfreetype6-dev \
+            libjpeg-dev libpng-dev pkg-config python3-venv zip \
+            gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi \
+            libstdc++-arm-none-eabi-newlib
+          arm-none-eabi-gcc --version | head -1
+          make --version | head -1
+      - name: Download Epsilon, apply the iOS-OS patch, compile
+        run: ./scripts/build-firmware.sh
+      - name: Package the Mac installer
+        run: |
+          set -e
+          out=dist/iOS-OS-Mac/iOS-OS
+          mkdir -p "$out"
+          cp -R installer/firmware installer/numworks installer/games "$out/"
+          cp installer/server.py installer/dfu_launch.py installer/link_games.py \
+             installer/index.html "installer/Installer iOS-OS.command" "$out/"
+          cp docs/LISEZMOI.txt "$out/"
+          rm -rf "$out/__pycache__" "$out/games/.gitkeep"
+          chmod +x "$out/Installer iOS-OS.command" "$out"/*.py
+          # A zip keeps the executable bit of the .command file on the Mac
+          (cd dist/iOS-OS-Mac && zip -qr ../iOS-OS-Mac.zip iOS-OS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iOS-OS-Mac
+          retention-days: 7
+          path: dist/iOS-OS-Mac.zip
+      # What the Windows job needs (firmware, games, NumWorks' dfu.py): kept 1 day
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-files
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            installer/firmware
+            installer/numworks
+            installer/games
+
+  windows:
+    # The Windows installer is a real .exe, built on Windows (like NumSocial):
+    # Python, pyusb and the libusb DLL inside, nothing to install on the PC.
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: installer-files
+          path: installer
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install PyInstaller, pyusb and libusb
+        run: python -m pip install pyinstaller pyusb libusb-package
+      - name: Build the .exe and run its self-test
+        run: python scripts/build-windows-installer.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iOS-OS-Windows
+          retention-days: 7
+          path: dist/iOS-OS-Windows

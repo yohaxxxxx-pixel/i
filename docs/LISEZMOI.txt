@@ -1,0 +1,25 @@
+iOS-OS : installateur pour NumWorks n0110, n0115 et n0120 (Mac)
+===================================================
+
+1. Une seule fois, dans le Terminal (avec Homebrew, https://brew.sh) :
+
+       brew install libusb dfu-util
+
+   Les jeux déjà dans le dossier games/ sont prêts à installer.
+   Pour en ajouter d'autres (.nwa), il faut aussi :
+
+       brew install --cask gcc-arm-embedded
+
+2. Double-clique sur « Installer iOS-OS.command ».
+   (La première fois, macOS peut le bloquer : clic droit > Ouvrir > Ouvrir.)
+   La page de l'installateur s'ouvre dans ton navigateur.
+
+3. Branche la calculatrice en USB et appuie sur Reset au dos :
+   elle redémarre sur le système officiel (slot A).
+
+4. Quand le voyant passe au vert, glisse tes jeux .nwa dans la page
+   si tu veux, puis clique sur « Installer iOS-OS ».
+
+iOS-OS s'installe dans le slot B : le système officiel (slot A) n'est
+jamais modifié. Après un Reset, la calculatrice revient sur le système
+officiel ; il suffit de relancer l'installation pour retrouver iOS-OS.

@@ -1,0 +1,14 @@
+# NumWorks code and anything built from it stays local, never committed.
+firmware/
+installer/firmware/
+installer/numworks/
+installer/games/*.nwa
+dist/
+.build.log
+*.log
+
+# Local tools
+.venv/
+__pycache__/
+.DS_Store
+build/
